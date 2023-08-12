@@ -5,6 +5,7 @@ const timezone = document.getElementById("time-zone");
 const countryEl = document.getElementById("country");
 const weatherForecastEl = document.getElementById("weather-forecast");
 const currentTempEl = document.getElementById("current-temp");
+// const searchInput = document.getElementById("search");
 
 const days = [
   "Sunday",
@@ -50,16 +51,16 @@ setInterval(() => {
   dateEl.innerHTML = days[day] + ", " + date + " " + months[month];
 }, 1000);
 
-const API_KEY = "49cc8c821cd2aff9af04c9f98c36eb74";
-getWeatherData();
+
+
+
 function getWeatherData() {
   navigator.geolocation.getCurrentPosition((success) => {
-    let { latitude, longitude } = success.coords;
+    let { lat, lon } = success.coords;
 
     fetch(
-      `https://api.openweathermap.org/data/2.5/onecall?lat=${latitude}&lon=${longitude}&exclude=hourly,minutely&units=metric&appid=${API_KEY}`
+      `http://api.weatherapi.com/v1/forecast.json?lat=${lat}&lon=${lon}&key=a8244b92d399478aac5213819231108&q=cairo&days=7`
     )
-    //              !passed units in C from K 
       .then((res) => res.json())
       .then((data) => {
         showWeatherData(data);
@@ -67,40 +68,43 @@ function getWeatherData() {
   });
 }
 
+document.getElementById("search").addEventListener("keyup", (e) => {
+  getWeatherData(e.target.value);
+});
+
 function showWeatherData(data) {
-  let { humidity, pressure, wind_speed } = data.current;
+  let { humidity, pressure_in, wind_kph } = data.current;
 
-  timezone.innerHTML = data.timezone;
-  countryEl.innerHTML = data.lat + "N " + data.lon + "E";
+  timezone.innerHTML = data.location.tz_id;
+  countryEl.innerHTML = data.location.lat + "N " + data.location.lon + "E";
 
-  currentWeatherItemsEl.innerHTML = `<div class="weather-item">
+  currentWeatherItemsEl.innerHTML = `
+  <div class="weather-item">
         <div>Humidity</div>
         <div>${humidity}%</div>
     </div>
     <div class="weather-item">
         <div>Pressure</div>
-        <div>${pressure}</div>
+        <div>${pressure_in} </div>
     </div>
     <div class="weather-item">
         <div>Wind Speed</div>
-        <div>${wind_speed}</div>
+        <div>${wind_kph} kph</div>
     </div>
     `;
 
   let otherDayForcast = "";
-  data.daily.forEach((day, idx) => {
-    if (idx == 0) {
+  data.daily.forEach((day, is_day) => {
+    if (is_day == 0) {
       currentTempEl.innerHTML = `
             <img
-            src="http://openweathermap.org/img/wn/10d@2x.png"
+            src="${current.condition.icon}"
             alt="weather icon"
             class="w-icon"
             />
             <div class="other">
-                <div class="day">${window
-                  .moment(day.dt * 1000)
-                  .format("dddd")}</div>
-                <div class="temp">Night - ${day.temp.night}&#176;C</div>
+                <div class="day">${is_day}</div>
+                <div class="temp ">Night - ${day.temp.night}&#176;C</div>
                 <div class="temp">Day - ${day.temp.day}&#176;C</div>
             </div>
             
@@ -108,15 +112,13 @@ function showWeatherData(data) {
     } else {
       otherDayForcast += `
             <div class="weather-forecast-item">
-                <div class="day">${window
-                  .moment(day.dt * 1000)
-                  .format("ddd")}</div>
+                <div class="day"> </div>
                   <img
-                  src="http://openweathermap.org/img/wn/10d@2x.png"
+                  src="${current.condition.icon}"
                   alt="weather icon"
                   class="w-icon"
                   />
-                <div class="temp fw-bold ">Night - ${day.temp.night}&#176;C</div>
+                <div class="temp fw-bold">Night - ${day.temp.night}&#176;C</div>
                 <div class="temp fw-bold">Day - ${day.temp.day}&#176;C</div>
             </div>
             `;
@@ -125,3 +127,6 @@ function showWeatherData(data) {
 
   weatherForecastEl.innerHTML = otherDayForcast;
 }
+
+
+getWeatherData("cairo");
